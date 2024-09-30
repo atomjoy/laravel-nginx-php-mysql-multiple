@@ -1,0 +1,77 @@
+services:
+
+# Php, nginx service
+  app:
+    tty: true
+    container_name: app_host
+    restart: unless-stopped
+    build: 
+      context: .
+      target: php
+      dockerfile: ./Dockerfile
+    working_dir: /var/www # bash root
+    ports:
+      - 8000:80      
+    networks:
+        - internal
+    depends_on:
+      - mysql
+    volumes:
+      - ./logs/nginx:/var/log/nginx/
+      - ./logs/php:/var/log/fpm-php.www.log
+      # - ./logs/supervisor:/var/log/supervisor/supervisord.log
+      # - myapp:/home/test/myapp
+  
+  # Database service
+  mysql:
+    tty: true
+    container_name: mysql_host
+    image: mysql:8.0
+    ports:
+      - 7000:3306
+    restart: unless-stopped
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=${DB_ALLOW_EMPTY_PASSWORD}
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}      
+    networks:
+      - internal
+    # volumes:
+      # - ./mysql:/docker-entrypoint-initdb.d/
+      # - db-data:/var/lib/mysql  
+
+  # Database service
+  # mariadb:
+  #   tty: true
+  #   container_name: mysql_host
+  #   image: mariadb
+  #   ports:
+  #     - 7000:3306
+  #   restart: unless-stopped
+  #   environment:
+  #     - MARIADB_ALLOW_EMPTY_PASSWORD=${DB_ALLOW_EMPTY_PASSWORD}
+  #     - MARIADB_DATABASE=${DB_DATABASE}
+  #     - MARIADB_ROOT_PASSWORD=${DB_PASSWORD}      
+  #   networks:
+  #     - internal
+  #   # volumes:
+  #     # - ./mysql:/docker-entrypoint-initdb.d/
+  #     # - db-data:/var/lib/mysql    
+
+# Docker volumes
+volumes:
+  # Storage
+  myapp:
+  # Db data
+  db-data: 
+    driver: local
+    driver_opts:
+      device: ./volume/mysql
+      type: none
+      o: bind
+  # Or
+  # db-data: ~
+
+networks:
+  internal:
+    driver: bridge
